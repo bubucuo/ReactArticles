@@ -241,7 +241,7 @@ flush一个fiber的意思就是把这个fiber的输出渲染到屏幕上。
 
 一个fiber的alternate是使用一个叫做`cloneFiber`的函数懒创建的(created lazily)。意思就是， 如果这个fiber的alternate存在，那么`cloneFiber`不会去创建一个新的对象，而是复用这个fiber的alternate，从而最小化任务分配(allocations)。
 
-我们应该把`alternate`字段当做一个实现细节(implementation detail)，但是它会在代码库了频繁的出现，隐藏我们有必要在这里探讨下。
+我们应该把`alternate`字段当做一个实现细节(implementation detail)，但是它会在代码库了频繁的出现，因此我们有必要在这里探讨下。
 
 ##### `output`
 
