@@ -126,25 +126,25 @@ React目前所用的调度方式并称不上革新，一个更新(update)引起�
 
 为了做到这几点，我们首先需要需要一种能拆分任务(work)成单元(unit)的方式，在一定意义上来说，那就是Fiber。一个Fiber代表了一个元任务(unit of work)。
 
-为了更进一步，让我们回到这个概念：把[函数数据作为React组件](https://github.com/reactjs/react-basic#transformation)，通常如下方式：
+为了更进一步，让我们回到这个概念：把[React组件作为数据的函数( React components as functions of data )](https://github.com/reactjs/react-basic#transformation)，通常如下方式：
 
 ```jsx
 v = f(d)
 ```
 
-这意味着渲染一个React app和调用一个内部调用其他函数的函数是类似的，这种类比对于理解Fiber是有用的。
+这意味着渲染一个React app和调用一个内部调用了其他函数的函数是类似的，这种类比对于理解Fiber是有用的。
 
 计算机一般用[调用堆栈(call stack)](https://en.wikipedia.org/wiki/Call_stack)来追踪程序的执行，当一个函数被执行之后，一个新的的栈帧(stack frame)被添加进栈，这个栈帧代表了这个函数执行的任务。
 
-当涉及到UI的时候，就会出现一次性有太多任务要被执行的问题，结果就可能引起动画掉帧、动画卡顿的现象。【实际上，一些任务可能是不必要的，是可以被别的更紧迫任务代替的。这就是UI组件和函数崩溃对比的地方，因为一般来说UI组件比函数更需要被先执行。】
+当涉及到UI的时候，就会出现一次性有太多任务要被执行的问题，结果就可能引起动画掉帧、动画卡顿的现象。更重要的是，一些任务可能是不必要立即执行的，是可以被别的更紧迫任务代替的。由于一般情况下UI组件相对比函数更需要被先执行，而这就是让UI组件和函数崩溃的地方。
 
-新的浏览器和React Native完成了API来解决这个具体问题：`requestIdleCallback`调度一个将会在闲置时期调用的低优先级的函数，`requestAnimationFrame`调度一个将会在下一个动画帧调用的高优先级的函数。问题就是，为了用这些API，你需要一种方式来把渲染任务拆分成增量单元(incremental units)，如果你只是依赖于调用堆栈(call stack)，那这个栈就会一直工作直到栈空为止。
+更新的浏览器(和React Native)完善了API来解决这个问题：`requestIdleCallback`调度一个将会在闲置时期调用的低优先级的函数，`requestAnimationFrame`调度一个将会在下一个动画帧调用的高优先级的函数。问题就是，为了用这些API，你需要一种方式来把渲染任务拆分成增量单元(incremental units)，如果你只是依赖于调用堆栈(call stack)，那这个栈就会一直工作直到栈空为止。
 
 试想一下，如果我们可以定制调用堆栈的行为，从而达到优化渲染UI目的，这是不是很棒？如果我们可以根据自己的意愿干扰(interrupt)调用堆栈并且手动操控栈帧，这是不是很棒？
 
 以上就是React Fiber的目的。Fiber是栈的实现，是为React组件特殊定制的。你可以把一个Fiber当做一个虚拟栈帧(**virtual stack frame**)。
 
-重新实现这种栈的好处就是你可以把栈帧保存才内存中([keep stack frames in memory](https://www.facebook.com/groups/2003630259862046/permalink/2054053404819731/))，并且在任何你需要的时候执行它。这对我们完成调度的目标是非常关键的。
+重新实现这种栈的好处就是你可以把栈帧保存在内存中([keep stack frames in memory](https://www.facebook.com/groups/2003630259862046/permalink/2054053404819731/))，并且在任何你需要的时候执行它。这对我们完成调度的目标是非常关键的。
 
 除了调度，手动处理栈帧也能解锁一些潜在的技能，比如说并发和错误边界( concurrency and error boundaries)，我们在接下来的章节中也说再说到这些话题。
 
@@ -154,27 +154,27 @@ v = f(d)
 
 注意：随着我们对于实现细节的逐步了解，一些变化的可能性也可能会变多。如果你注意到一些错误的或者过时信息，*Please file a PR。*
 
-具体来说，一个Fiber就是一个包含组件信息输入和输出的JS对象。
+具体来说，一个fiber就是一个包含组件信息输入和输出的JS对象。
 
-一个Fiber对应一个栈帧，也对应一个组件实例。
+一个fiber对应一个栈帧，也对应一个组件实例。
 
-一下是关于Fiber的一些重要知识。(这个表格不够详细。)
+一下是关于fiber的一些重要知识。(这个列表并没有详细列出fiber的所有字段。)
 
 ##### `type` and `key`
 
-Fiber中的type和key的用途和React元素中的是完全一样的。(实际上，当Fiber从元素中元素中创建完成之后，这两个值是被直接拷贝出来的。)
+fiber中的type和key的用途和React元素中的是完全一样的。(实际上，当fiber从元素中元素中创建完成之后，这两个值是被直接拷贝出来的。)
 
-Fiber 的type描述了它对应的组件，对于复合组件(composite components)，type就是function或者class组件本身，对于原生组件(host components)(如div、span等)，type就是一个字符串。
+fiber 的type描述了它对应的组件，对于复合组件(composite components)，type就是function或者class组件本身，对于原生组件(host components)(如div、span等)，type就是一个字符串。
 
 从概念上来说，type就是被栈帧追踪其执行的函数。
 
-和type一样，key用于调度过程中来决定fiber是否可以被复用。
+和type一样，key用于协调过程中来决定fiber是否可以被复用。
 
 ##### `child` and `sibling`
 
 这两个值指向其它fiber，描述一个fiber的递归树结构。
 
-child fiber指的是是一个组件render方法返回的值，如下例：
+child fiber指的是一个组件render方法返回的值，如下例：
 
 ```jsx
 function Parent() {
@@ -196,7 +196,11 @@ child fibers组成一个单向链表，他们的head是第一个child，所以�
 
 回到我们的函数类比，你可以把一个child fiber当做一个[尾调用函数(tail-called function)](https://en.wikipedia.org/wiki/Tail_call)。
 
-[关于尾调用，可以查看[阮一峰老师文章的尾调用优化-->](https://www.ruanyifeng.com/blog/2015/04/tail-call.html)]
+[尾调用：
+
+<img src="https://tva1.sinaimg.cn/large/006y8mN6ly1g935ipofqmj30u016bnbu.jpg" height=600/>
+
+来自[阮一峰尾调用优化](https://www.ruanyifeng.com/blog/2015/04/tail-call.html)]
 
 ##### `return`
 
@@ -206,7 +210,7 @@ return fiber是指程序(program)在处理完当前fiber之后应当返回的fib
 
 概念上来说，props是指函数的参数。一个fiber的`pendingProps`被赋值在这个fiber执行(execution)的开始，`memoizedProps`则是在执行完成时被赋值。
 
-当新的`pendingProps`和`memoizedProps`相等的时候，这就意味着这个fiber 的上一个输出(output)可以被复用，从而避免不必要的任务。
+当新传入的`pendingProps`等于 `memoizedProps`的时候，这表示这个fiber 的上一个输出(output)可以被复用，从而避免了不必要的任务。
 
 ##### `pendingWorkPriority`（挂起任务优先级）
 
@@ -229,7 +233,7 @@ function matchesPriority(fiber, priority) {
 
 ###### `flush`
 
-flush一个fiber的意思就是把这个fiber的输出渲染到屏幕上。
+flush一个fiber的意思就是把这个fiber的输出(output)渲染到屏幕上。
 
 ###### `work-in-progress`(正在进行中的任务)
 
@@ -239,7 +243,7 @@ flush一个fiber的意思就是把这个fiber的输出渲染到屏幕上。
 
 当前fiber和work-in-progress的alternate互为对方。
 
-一个fiber的alternate是使用一个叫做`cloneFiber`的函数懒创建的(created lazily)。意思就是， 如果这个fiber的alternate存在，那么`cloneFiber`不会去创建一个新的对象，而是复用这个fiber的alternate，从而最小化任务分配(allocations)。
+一个fiber的alternate是使用一个叫做`cloneFiber`的函数懒创建的(created lazily)。意思就是， 如果这个fiber的alternate存在，那么`cloneFiber`不会去创建一个新的对象，而是复用这个fiber的alternate，从而最大程度地减少任务分配(allocations)。
 
 我们应该把`alternate`字段当做一个实现细节(implementation detail)，但是它会在代码库了频繁的出现，因此我们有必要在这里探讨下。
 
@@ -251,7 +255,7 @@ flush一个fiber的意思就是把这个fiber的输出渲染到屏幕上。
 
 概念上来说，一个fiber的`output`是指一个函数的返回值。
 
-每一个fiber最后都是有`output`的，但是`output`只能在叶子节点被`host component`创建。然后可以由`output生成树。
+每一个fiber最后都是有`output`的，但是`output`只能在叶子节点被`host component`创建，然后被传递到树(tree)上。
 
 `output`最终会到渲染器，然后flush变化到渲染环境。渲染器负责`output`的如何创建和更新。
 
@@ -268,13 +272,11 @@ flush一个fiber的意思就是把这个fiber的输出渲染到屏幕上。
 - 副作用如何工作(比如说生命周期方法)。
 - 协同程序(coroutine)是什么，当完成如context和layout这样特性的时候怎么使用协同程序。
 
-
-
 ### 相关视频
 
 - [What's Next for React (ReactNext 2016)](https://youtu.be/aV1271hd9ew)
 
-  
+  [没有找到作者的’未来章节‘，可能作者工作太忙，暂时搁笔了，期待他的复出吧，在此之前，我们先寻求别的资源吧。]
 
 ## 回顾
 
