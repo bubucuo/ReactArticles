@@ -1,6 +1,6 @@
 ## React Fiber Architecture
 
-以下全是个人翻译，有不到位的，请指正。[原文地址](https://github.com/acdlite/react-fiber-architecture/blob/master/README.md)
+个人翻译，有不到位的，请指正。[原文地址](https://github.com/acdlite/react-fiber-architecture/blob/master/README.md)
 
 ()内的词条为对应英文词条，()语句是原文内容，[]内的为我的补充，【】内为不确定是否准确的翻译。
 
@@ -34,10 +34,10 @@ Fiber尚未完成，它是一个正在进行中的工程，并且在完成之前
 
 我强烈建议您在对以下资源熟悉之前再继续：
 
-- [React Components, Elements, and Instances（React组件、元素和实例）](https://facebook.github.io/react/blog/2015/12/18/react-components-elements-and-instances.html) - "Component" 是一个经常会用到的术语，必须掌握！
-- [Reconciliation（调度）](https://facebook.github.io/react/docs/reconciliation.html) - 深刻掌握React的协调算法（reconciliation algorithm）。
-- [React Basic Theoretical Concepts（React基本理论概念）](https://github.com/reactjs/react-basic) - 这是一个对React概念模型的描述，没有代码实现的逻辑。这里的一些内容也许不是必读的，当然你看了的话，随着时间，你会发现它们的价值的。
-- [React Design Principles（React设计规则）](https://facebook.github.io/react/contributing/design-principles.html) - 希望你能对<u>调度（scheduling）</u>给予特殊的注意力，它深刻地解释了React Fiber的原理。
+- [React Components, Elements, and Instances（React组件、元素和实例）](https://facebook.github.io/react/blog/2015/12/18/react-components-elements-and-instances.html) - "Component" 是一个经常会用到的术语，必须掌握！[这个是介绍虚拟dom的，2015年Dan写的，比较简单，应该大家都已经掌握了。]
+- [Reconciliation（协调）](https://zh-hans.reactjs.org/docs/reconciliation.html) - 深刻掌握React的协调算法（reconciliation algorithm）[主要是diff过程，算法复杂度为O(n)]。
+- [React Basic Theoretical Concepts（React基本理论概念）](https://github.com/reactjs/react-basic) - 这是一个对React概念模型的描述，没有代码实现的逻辑。这里的一些内容也许不是必读的，当然你看了的话，随着时间，你会发现它们的价值的[网上看到一个还不错的[译文](https://github.com/react-guide/react-basic/blob/master/README.md)]。
+- [React Design Principles（React设计原则）](https://zh-hans.reactjs.org/docs/design-principles.html) - 希望你能对<u>调度（scheduling）</u>给予特殊的注意力，它深刻地解释了React Fiber的原理。[原文提到，这篇设计原则的文档目的是使开发者更易于了解他们如何决策 React（应该做哪些，不应该做哪些），以及他们的开发理念。]
 
 #### 概览
 
@@ -45,21 +45,21 @@ Fiber尚未完成，它是一个正在进行中的工程，并且在完成之前
 
 在我们深入新知识点之前，先来看一些概念。
 
-##### 什么是调度？
+##### 什么是协调？
 
-###### 调度
+###### 协调(*reconciliation*)
 
-​	React用这个算法来对比(diff) 两棵树，以判断哪些地方需要改变。
+​	React用来对比(diff) 两棵树的算法，这个算法可以判断哪些地方需要被改变。
 
 ###### 更新(update)
 
  	指数据上的改变，用于渲染一个React应用。通常是setState导致的，最终会触发重新渲染(re-render)。
 
-React API的核心思想是认为updates能引起整个应用重新渲染(re-render)。在项目中任何一种特殊的状态转变成另一种状态的时候，这种思想允许开发者声明式地推理，而不是担心如何有效地更新你的应用(app)。
+React API的核心思想是认为update能引起整个应用重新渲染(re-render)。在项目中任何一种特殊的状态转变成另一种状态的时候，这种思想允许开发者声明式地推理，而不是担心如何有效地更新你的应用(app)。
 
 [!--以下app不再翻译，就是应用的意思，指你的项目--]
 
-事实上在每个变化时候重新渲染整个app只对大部分不重要的app起作用。在一个现实中的app，它会由于性能（performance）而被重度耗损。React是有优先级(optimizations)的，这使得在整个app重新渲染的时候，app能保持高性能。这一系列的所谓的优先级(optimizations)正是调度(reconciliation)过程的一部分。
+事实上在每个变化时候都重新渲染整个app只对大部分不重要的app起作用。在一个现实中的app，它会由于性能（performance）而被重度耗损。React是有优先级(optimizations)的，这使得在整个app重新渲染的时候，app能保持高性能。这一系列的所谓的优先级(optimizations)正是调度(reconciliation)过程的一部分。
 
 调度(reconciliation)就是我们大家都知道的虚拟dom背后的算法。一个深刻一点的描述：当你渲染一个React app的时候，一个能描述整个app的树节点就产生了，这个树节点被存在内存(memory)中，这棵树然后会被带到渲染环境中。比如说，在一个浏览器端页面中，它会被转变成一系列的dom操作。当这个app更新的时候(通常是通过setState更新)，一棵新树就生成了。然后，新树和老树对比(diff)计算出如果要更新这个app的，需要进行什么操作。
 
@@ -75,7 +75,7 @@ React API的核心思想是认为updates能引起整个应用重新渲染(re-ren
 
 DOM是React能渲染的其中一种环境，其它主要是React Native下的原生IOS和安卓view。（这也是虚拟dom是个怪兽的原因）。
 
-React能在这么多环境运行的原因是它设计模式，即协调和渲染是独立的阶段（separation phases）。协调器(reconciler)的工作是计算一棵树哪里发生了变化，渲染器(renderer)的工作是用这些信息来实际上更新整个app。[就是reconciler来diff，renderer根据diff结果去更新dom页面]
+React能在这么多环境运行的原因是它的设计模式，即协调和渲染是独立的阶段（separation phases）。协调器(reconciler)的工作是计算一棵树哪里发生了变化，渲染器(renderer)的工作是用这些信息来实际上更新整个app。[就是reconciler来diff，renderer根据diff结果去更新dom页面]
 
 这种独立(separation)意味着React DOM和React Native可以共用一个由React core提供的协调器，然后分别用它们自己的更新器(renderer)。
 
@@ -83,11 +83,11 @@ Fiber重写了协调器，但是原则上与渲染器无关，尽管渲染器也
 
 #### 调度(Scheduling)
 
-*scheduling*:  计算何时执行的过程。
+*scheduling*:  指决定工作何时执行的过程。
 
-*work*：任何的计算都必须执行。work通常是由update导致的(如setState)。
+*work*：必须执行的任何计算。work通常是由update导致的(如setState)。
 
-[React的设计规则文档](https://facebook.github.io/react/contributing/design-principles.html#scheduling)在调度上的描述太完善了，这里就直接引用了：
+[React设计原则](https://facebook.github.io/react/contributing/design-principles.html#scheduling)在调度上的描述太完善了，这里就直接引用了：
 
 `在 React 当前的实现中，React 在单个 tick 周期中递归地走完这棵树，然后调用整个更新后树的渲染方法。但是以后 React 可能会延迟一些更新操作来防止掉帧。
 这在 React 的设计中很常见。有一些流行的库实现了 “push” 模式，即当新数据到达时再计算。然而 React 坚持 “pull” 模式，即计算可以延迟到必要时再执行。
@@ -96,11 +96,11 @@ React 不是一个常规的数据处理库，它是开发用户界面的库。�
 
 关键点是：
 
-- 在UI中，每个更新(update)的立即执行是没有必要的，如果你真的这么做了不仅是一种浪费，还会引起掉帧，降低用户体验。
+- 在UI中，并不是每个更新(update)的都有必要立即执行，如果你真的这么做了不仅是一种浪费，还会引起掉帧，最后降低用户体验。
 - 不同类型的更新(update)有不同的优先级(priority)，比如说动画更新的执行完成就需要比数据更新更及时。
--  “push”模式需要app(或者说是程序员)决定怎样执行调度工作，“pull”模式令React具有敏捷性，并决定如何执行调度。
+-  “push”模式需要app(或者说是程序员)决定怎样执行调度工作，“pull”模式令React具有敏捷性，并帮助我们做出决定。
 
-React目前所用的调度方式并称不上革新，一个更新(update)引起整个子树的立即重新渲染(re-render)。能称得上以一种革新方式使用调度的是React核心算法：Fiber背后的驱动方式。
+React目前没有充分利用调度的优势，一个更新(update)引起整个子树的立即重新渲染(re-render)。大幅度修改React的核心算法以利用调度优势的是Fiber背后的驱动思想。
 
 ------
 
@@ -112,9 +112,9 @@ React目前所用的调度方式并称不上革新，一个更新(update)引起�
 
 开始咯！
 
-我们已经说过Fiber的首要目标是让React可以利用调度的优点，尤其是我们需要用Fiber做到以下几点：
+我们已经说过Fiber的首要目标是让React可以利用调度的优势，尤其是我们需要用Fiber做到以下几点：
 
-- 可以暂停任务，并且能稍后再回来继续
+- 可以暂停任务，并且能稍后再回来
 
 - 给不同类型的任务赋予优先级
 
@@ -136,9 +136,9 @@ v = f(d)
 
 计算机一般用[调用堆栈(call stack)](https://en.wikipedia.org/wiki/Call_stack)来追踪程序的执行，当一个函数被执行之后，一个新的的栈帧(stack frame)被添加进栈，这个栈帧代表了这个函数执行的任务。
 
-当涉及到UI的时候，就会出现一次性有太多任务要被执行的问题，结果就可能引起动画掉帧、动画卡顿的现象。更重要的是，一些任务可能是不必要立即执行的，是可以被别的更紧迫任务代替的。由于一般情况下UI组件相对比函数更需要被先执行，而这就是让UI组件和函数崩溃的地方。
+在处理UI的时候，会出现一次性有太多任务要被执行的情况，结果可能会引起动画掉帧、动画卡顿的现象。更重要的是，一些任务可能是不必要立即执行的，是可以被别的更紧迫任务代替的。由于一般情况下UI组件相对比函数更需要被先执行，而这就是UI组件和函数不一致的地方。
 
-更新的浏览器(和React Native)完善了API来解决这个问题：`requestIdleCallback`调度一个将会在闲置时期调用的低优先级的函数，`requestAnimationFrame`调度一个将会在下一个动画帧调用的高优先级的函数。问题就是，为了用这些API，你需要一种方式来把渲染任务拆分成增量单元(incremental units)，如果你只是依赖于调用堆栈(call stack)，那这个栈就会一直工作直到栈空为止。
+较新的浏览器(和React Native)完善了相关API来解决这个问题：`requestIdleCallback`调度一个将会在闲置时期调用的低优先级的函数，`requestAnimationFrame`调度一个将会在下一个动画帧调用的高优先级的函数。问题就是，为了用这些API，你需要一种方式来把渲染任务拆分成增量单元(incremental units)，如果你只是依赖于调用堆栈(call stack)，那这个栈就会一直工作直到栈空为止。
 
 试想一下，如果我们可以定制调用堆栈的行为，从而达到优化渲染UI目的，这是不是很棒？如果我们可以根据自己的意愿干扰(interrupt)调用堆栈并且手动操控栈帧，这是不是很棒？
 
@@ -168,11 +168,11 @@ fiber 的type描述了它对应的组件，对于复合组件(composite componen
 
 从概念上来说，type就是被栈帧追踪其执行的函数。
 
-和type一样，key用于协调过程中来决定fiber是否可以被复用。
+和type一样，key用于协调过程中决定fiber是否可以被复用。
 
 ##### `child` and `sibling`
 
-这两个值指向其它fiber，描述一个fiber的递归树结构。
+这两个值指向其它fiber，描述fiber的递归树结构。
 
 child fiber指的是一个组件render方法返回的值，如下例：
 
