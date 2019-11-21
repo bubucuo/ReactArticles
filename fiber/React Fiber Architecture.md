@@ -4,7 +4,7 @@
 
 ()内的词条为对应英文词条，()语句是原文内容，[]内的为我的补充，【】内为不确定是否准确的翻译。
 
-
+[[思维导图](https://github.com/bubucuo/ReactArticles/blob/master/%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.png)]
 
 [TOC]
 
