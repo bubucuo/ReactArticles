@@ -258,6 +258,33 @@ json格式可参考**[vscode-es7-javascript-react-snippets](https://github.com/d
     ],
     "description": "导入pages"
   },
+  "dva model": {
+    "prefix": "model",
+    "body": [
+      "export default {",
+      "\tnamespace: '${1:${TM_FILENAME_BASE}}',",
+      "\tstate: {},",
+      "\teffects: {",
+      "\t\t*fetch({ payload }, { call, put }) {",
+      "\t\t\tyield put({ type: 'save' });",
+      "\t\t}",
+      "\t},",
+      "\treducers: {",
+      "\t\tsave(state, action) {",
+      "\t\t\treturn { ...state, ...action.payload };",
+      "\t\t}",
+      "\t}",
+      "};"
+    ],
+    "description": "model tpl"
+  },
+  "improt styles": {
+    "prefix": "styles",
+    "body": [
+      "import styles from './index.module.css';",
+    ],
+    "description": "styles"
+  },
 }
 ```
 
