@@ -214,6 +214,22 @@ json格式可参考**[vscode-es7-javascript-react-snippets](https://github.com/d
     ],
     "description": "function组件"
   },
+  "const-function-cmp": {
+    "prefix": "cfc",
+    "body": [
+      "const ${1:${TM_FILENAME_BASE}} = () => <div></div>"
+    ],
+    "description": "const function组件"
+  },
+  "const-function-cmp-more": {
+    "prefix": "cfcm",
+    "body": [
+      "const ${1:${TM_FILENAME_BASE}} = props => {",
+      "\treturn <div></div>",
+      "};"
+    ],
+    "description": "const function组件"
+  },
   "function": {
     "prefix": "f",
     "body": [
@@ -258,6 +274,13 @@ json格式可参考**[vscode-es7-javascript-react-snippets](https://github.com/d
     ],
     "description": "导入pages"
   },
+  "improt component": {
+    "prefix": "ec",
+    "body": [
+      "export {$1} from './$1' ;",
+    ],
+    "description": "导入pages"
+  },
   "dva model": {
     "prefix": "model",
     "body": [
@@ -282,6 +305,13 @@ json格式可参考**[vscode-es7-javascript-react-snippets](https://github.com/d
     "prefix": "styles",
     "body": [
       "import styles from './index.module.css';",
+    ],
+    "description": "styles"
+  },
+  "export default": {
+    "prefix": "ed",
+    "body": [
+      "export default ${1:${TM_FILENAME_BASE}};",
     ],
     "description": "styles"
   },
